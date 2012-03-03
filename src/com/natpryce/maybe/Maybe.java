@@ -9,10 +9,16 @@ import java.util.Iterator;
 public abstract class Maybe<T> implements Iterable<T> {
     public abstract boolean isKnown();
     public abstract T otherwise(T defaultValue);
+    public abstract T otherwise(Computer<T> defaultValueComputer);
     public abstract Maybe<T> otherwise(Maybe<T> maybeDefaultValue);
+    public abstract Maybe<T> otherwise(Computer<Maybe<T>> maybeDefaultValueComputer);
     public abstract <U> Maybe<U> to(Function<? super T, ? extends U> mapping);
     public abstract Maybe<Boolean> query(Predicate<? super T> mapping);
-    
+
+    public static interface Computer<T> {
+        T compute();
+    }
+
     public static <T> Maybe<T> unknown() {
         return new Maybe<T>() {
             @Override
@@ -30,8 +36,18 @@ public abstract class Maybe<T> implements Iterable<T> {
             }
 
             @Override
+            public T otherwise(Computer<T> defaultValueComputer) {
+                return defaultValueComputer.compute();
+            }
+
+            @Override
             public Maybe<T> otherwise(Maybe<T> maybeDefaultValue) {
                 return maybeDefaultValue;
+            }
+
+            @Override
+            public Maybe<T> otherwise(Computer<Maybe<T>> maybeDefaultValueComputer) {
+                return maybeDefaultValueComputer.compute();
             }
 
             @Override
@@ -88,7 +104,17 @@ public abstract class Maybe<T> implements Iterable<T> {
         }
 
         @Override
+        public T otherwise(Computer<T> defaultValueComputer) {
+            return theValue;
+        }
+
+        @Override
         public Maybe<T> otherwise(Maybe<T> maybeDefaultValue) {
+            return this;
+        }
+
+        @Override
+        public Maybe<T> otherwise(Computer<Maybe<T>> maybeDefaultValueComputer) {
             return this;
         }
 
@@ -115,7 +141,6 @@ public abstract class Maybe<T> implements Iterable<T> {
             DefiniteValue that = (DefiniteValue) o;
 
             return theValue.equals(that.theValue);
-
         }
 
         @Override
