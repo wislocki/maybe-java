@@ -11,6 +11,7 @@ import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
+import static com.natpryce.maybe.Maybe.Computer;
 import static com.natpryce.maybe.Maybe.definitely;
 import static com.natpryce.maybe.Maybe.unknown;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -62,6 +63,18 @@ public class MaybeTest {
     public void otherwiseADefaultValue() throws Exception {
         assertThat(noString().otherwise(""), equalTo(""));
         assertThat(definitely("foo").otherwise(""), equalTo("foo"));
+        assertThat(definitely("foo").otherwise(""), equalTo("foo"));
+    }
+
+    @Test
+    public void otherwiseAComputedValue() {
+        assertThat(noString().otherwise(new Computer<String>() {
+            public String compute() { return "alice" + '@' + "example.com"; }
+        }), equalTo("alice@example.com"));
+
+        assertThat(definitely("foo").otherwise(new Computer<String>() {
+            public String compute() { return "not" + ' ' + "used"; }
+        }), equalTo("foo"));
     }
 
     @Test
@@ -69,6 +82,21 @@ public class MaybeTest {
         assertThat(noString().otherwise(noString()).otherwise(""), equalTo(""));
         assertThat(noString().otherwise(definitely("X")).otherwise(""), equalTo("X"));
         assertThat(definitely("X").otherwise(definitely("Y")).otherwise(""), equalTo("X"));
+    }
+
+    @Test
+    public void chainingComputedOtherwise() throws Exception {
+        assertThat(noString().otherwise(new Computer<Maybe<String>>() {
+            public Maybe<String> compute() { return noString(); }
+        }).otherwise(""), equalTo(""));
+
+        assertThat(noString().otherwise(new Computer<Maybe<String>>() {
+            public Maybe<String> compute() { return definitely("X"); }
+        }).otherwise(""), equalTo("X"));
+
+        assertThat(definitely("X").otherwise(new Computer<Maybe<String>>() {
+            public Maybe<String> compute() { return definitely("Y"); }
+        }).otherwise(""), equalTo("X"));
     }
 
     @Test
