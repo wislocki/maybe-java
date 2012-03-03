@@ -88,6 +88,24 @@ which lets you chain otherwise expressions:
 
    assertThat(unknown().otherwise(definitely("X")).otherwise(""), equalTo("X"));
 
+Finally, otherwise is also overloaded to take a "computer", which when
+implemented as an anonymous inner class, for example, will be called to
+compute a default value:
+
+   assertThat(noString().otherwise(new Computer<String>() {
+       public String compute() { return "alice" + '@' + "example.com"; }
+   }), equalTo("alice@example.com"));
+
+
+As with the otherwise expressions above, you can either return a value
+(with Maybe.Computer<T>) or another Maybe (with Maybe.Computer<Maybe<T>>)
+to chain with other otherwise expressions:
+
+   assertThat(definitely("X").otherwise(new Computer<Maybe<String>>() {
+       public Maybe<String> compute() { return definitely("Y"); }
+   }).otherwise(""), equalTo("X"));
+
+
 Maybe also has a method that uses a function to map a Maybe<T> to a Maybe<U>
 
     <U> Maybe<U> to(Function<T,U> mapping);
